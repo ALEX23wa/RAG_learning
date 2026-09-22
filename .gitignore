@@ -1,0 +1,7 @@
+.vscode/
+.env
+.key
+__pycache__/
+.pytest_cache/
+Model_weight/
+

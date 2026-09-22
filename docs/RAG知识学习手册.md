@@ -156,7 +156,7 @@ ANN 是近似最近邻搜索：在大量向量中，用速度和内存换取一�
 
 ### 3.2 环境、版本与目录
 
-建议学习环境使用 Python 3.11 或 3.12 的独立虚拟环境。下表是本次核验的直接依赖固定版本，不代表未来的最新版；完整依赖锁应在安装成功后生成。当前工作环境使用 Python 3.14.6 执行本地验证，最终实际验证范围见文末。
+本项目使用 Conda 的 `langchain` 环境，解释器位于 `D:\Anaconda\envs\langchain\python.exe`。项目根目录的 `environment.yml` 记录了环境与依赖；以下直接依赖版本与该文件一致。
 
 | PyPI 包 | 固定版本 | 用途 |
 |---|---|---|
@@ -166,68 +166,66 @@ ANN 是近似最近邻搜索：在大量向量中，用速度和内存换取一�
 | langchain-text-splitters | 1.1.2 | 分块 |
 | qdrant-client | 1.19.1 | 本地向量库 |
 | pypdf | 6.19.0 | 文本型 PDF 解析 |
+| python-dotenv | 1.2.3 | 加载项目根目录的 `.env` |
 
-版本来自 [PyPI](https://pypi.org/)，其中 [langchain-qdrant](https://pypi.org/project/langchain-qdrant/1.1.0/) 与 [qdrant-client](https://pypi.org/project/qdrant-client/1.19.1/) 是独立发布的包。不要因为都属于 LangChain 生态，就给所有依赖填写相同版本号。
-
-以下命令在你新建的练习目录运行。路径带空格时保留引号。先从 [Python 官方下载页](https://www.python.org/downloads/windows/) 安装选定的 Python；用 `py -0p` 查看已安装版本，再把命令中的 `3.12` 改为本机版本。
+以下命令从项目根目录 `D:\Vscode_project\RAG_learning` 开始执行。已有 `langchain` 环境时直接激活，无需重新创建或安装依赖：
 
 ```powershell
-New-Item -ItemType Directory -Force '.\rag-practice' | Out-Null
+conda activate langchain
+python -c "import sys; print(sys.executable)"
+python -m pip check
 Set-Location '.\rag-practice'
-py -3.12 -m venv .venv
-# 直接调用虚拟环境解释器，无需更改 PowerShell 执行策略。
-.\.venv\Scripts\python.exe -m pip install langchain-core==1.6.3 langchain-openai==1.6.2 langchain-qdrant==1.1.0 langchain-text-splitters==1.1.2 qdrant-client==1.19.1 pypdf==6.19.0
-.\.venv\Scripts\python.exe -m pip check
-.\.venv\Scripts\python.exe -m pip freeze | Set-Content -Encoding utf8 requirements.lock.txt
 New-Item -ItemType Directory -Force '.\papers' | Out-Null
 ```
 
-首次安装需要网络。离线演示是指运行代码时不调用模型服务；不意味着软件依赖无需提前下载。无需安装整个 `langchain` 大包，本文直接使用所需子包。
+解释器输出应指向 `D:\Anaconda\envs\langchain\python.exe`。如果终端不能激活 Conda，也可以用 `& D:\Anaconda\envs\langchain\python.exe` 替代后续命令中的 `python`。只有在新机器上尚未创建环境时，才从项目根目录运行 `conda env create -f environment.yml`；迁移到其他安装位置前先调整文件末尾的 `prefix`。
 
-练习目录最终形态如下；这些是你运行示例时生成的文件，本次文档交付没有另外创建完整应用：
+首次安装依赖需要网络。离线演示是指运行代码时不调用模型服务；不意味着软件依赖无需提前下载。
+
+目录约定如下；后续运行命令均在 `rag-practice` 目录执行，`.env` 始终保存在其上一级项目根目录：
 
 ```text
-rag-practice/
-  rag_demo.py             # 复制下一节完整代码
-  papers/                 # 放你选择的非敏感文本 PDF
-  requirements.lock.txt
-  .venv/
-  .rag_state/
-    ACTIVE                # 当前代标识
-    generations/<uuid>/
-      manifest.json       # 模型与分块配置
-      catalog.sqlite      # 来源和块记录
-      vectors/            # Qdrant 本地数据
+RAG_learning/
+  .env                    # 本地密钥与运行配置，不提交 Git
+  environment.yml         # Conda 环境记录
+  rag-practice/
+    rag_demo.py
+    papers/               # 放你选择的非敏感文本 PDF
+    .rag_state/
+      ACTIVE              # 当前代标识
+      generations/<uuid>/
+        manifest.json     # 模型与分块配置
+        catalog.sqlite    # 来源和块记录
+        vectors/          # Qdrant 本地数据
 ```
 
 ### 3.3 配置模板与数据发送边界
 
-默认 `RAG_MODE=demo`，用确定性的哈希特征模拟向量，只展示候选原文，不生成答案。它会丢失语义，不能用于证明 RAG 的准确率。
+在项目根目录 `.env` 中设置配置。脚本在导入 LangChain 和初始化配置前，按自身位置加载该文件，与启动目录无关。使用 `override=False`，因此终端中已有的同名环境变量优先；如果修改 `.env` 后未生效，请清除终端中的对应变量再运行。`RAG_STATE_DIR` 的相对路径仍以当前工作目录为基准，入库和查询应在同一目录执行，或配置绝对路径。
 
-```powershell
-$env:RAG_MODE = 'demo'
-$env:RAG_STATE_DIR = '.\.rag_state'
-$env:PYTHONUTF8 = '1'
+默认 `RAG_MODE=demo`，用确定性的哈希特征模拟向量，只展示候选原文，不生成答案。它会丢失语义，不能用于证明 RAG 的准确率。将以下配置合并到现有 `.env`，保留其他项目配置，同一个键只保留一份：
+
+```dotenv
+RAG_MODE=demo
+RAG_STATE_DIR=./.rag_state
 ```
 
-真实模型模式配置如下。你需要自己持有对应服务的密钥与模型权限；示例使用 OpenAI 适配器，模型名是可替换的配置，不保证所有兼容端点都提供这些模型或支持结构化输出。
+真实模型模式时，将对应配置改为下面的值，并填入自己的密钥。你需要持有对应服务的密钥与模型权限；示例使用 OpenAI 适配器，模型名是可替换的配置，不保证所有兼容端点都提供这些模型或支持结构化输出。
 
-```powershell
-$env:RAG_MODE = 'api'
-$env:RAG_STATE_DIR = '.\.rag_state_api'
-$env:OPENAI_BASE_URL = 'https://api.openai.com/v1'
-$env:RAG_EMBED_MODEL = 'text-embedding-3-small'
-$env:RAG_CHAT_MODEL = 'gpt-4.1-mini'
-# 在当前 PowerShell 窗口输入，避免将密钥写进示例或 Git。
-$ragSecret = Read-Host '模型服务 API Key' -AsSecureString
-$env:OPENAI_API_KEY = [System.Net.NetworkCredential]::new('', $ragSecret).Password
+```dotenv
+RAG_MODE=api
+RAG_STATE_DIR=./.rag_state_api
+OPENAI_BASE_URL=https://api.openai.com/v1
+RAG_EMBED_MODEL=text-embedding-3-small
+RAG_CHAT_MODEL=gpt-4.1-mini
+OPENAI_API_KEY=替换为你自己的密钥
 # 仅在已经确认练习资料可以发送到上述模型端点时设置。
-$env:RAG_ALLOW_REMOTE = '1'
+RAG_ALLOW_REMOTE=1
 ```
 
 API 模式入库会发送**全部提取后的分块文本**；提问会发送问题用于向量化，并把检索片段发给生成模型。原 PDF 文件没有直接上传，不意味着其内容没有离开电脑。代码只提供整体显式开关，不实现逐文档隐私策略；仅使用允许外发的练习资料。
 
-不要把服务密钥、材料和索引提交到仓库。在练习项目的 `.gitignore` 中加入 `.venv/`、`.rag_state*/`、`papers/`、`.env`。代码不读取 `.env`，上面的 PowerShell 环境变量就是配置入口。
+不要把服务密钥、材料和索引提交到仓库。在项目根目录的 `.gitignore` 中加入 `.rag_state*/`、`papers/`、`.env`。脚本加载 `.env` 后仍会强制关闭云端链路追踪。没有 `.env` 时，脚本可使用已有环境变量或默认离线配置。
 
 ### 3.4 完整可运行示例：保存为 `rag_demo.py`
 
@@ -245,6 +243,12 @@ import re
 import sqlite3
 import sys
 from uuid import NAMESPACE_URL, uuid4, uuid5
+
+from dotenv import load_dotenv
+
+# 按脚本位置定位项目根目录，兼容从不同工作目录启动。
+ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=ENV_FILE, override=False)
 
 # 教学默认关闭云端链路追踪，避免继承其他项目的正文追踪设置。
 os.environ["LANGSMITH_TRACING"] = "false"
@@ -306,7 +310,7 @@ def embeddings(cfg):
     if os.getenv("RAG_ALLOW_REMOTE") != "1":
         raise ValueError("API 模式需要 RAG_ALLOW_REMOTE=1；先确认材料允许外发")
     if not os.getenv("OPENAI_API_KEY"):
-        raise ValueError("缺少 OPENAI_API_KEY")
+        raise ValueError("缺少 OPENAI_API_KEY；请检查项目根目录 .env 中的 OPENAI_API_KEY 配置")
     return OpenAIEmbeddings(
         model=cfg["embedding_model"], base_url=cfg["endpoint"],
         max_retries=2, request_timeout=60,
@@ -495,21 +499,20 @@ if __name__ == "__main__":
 
 ### 3.5 运行与观察
 
-把两篇允许用于实验的文本型 PDF 放入 `papers`，先用离线模式：
+把两篇允许用于实验的文本型 PDF 放入 `papers`，按 3.3 在根目录 `.env` 中设置离线配置。激活 `langchain` 环境后，在 `rag-practice` 目录执行：
 
 ```powershell
-$env:RAG_MODE = 'demo'
-$env:RAG_STATE_DIR = '.\.rag_state'
-.\.venv\Scripts\python.exe .\rag_demo.py ingest .\papers
-.\.venv\Scripts\python.exe .\rag_demo.py ask '实验使用几个随机种子？' --k 4 --search-only
+python .\rag_demo.py ingest .\papers
+python .\rag_demo.py ask '实验使用几个随机种子？' --k 4 --search-only
 ```
 
 入库应显示 `READY files=... chunks=...`。查询应显示原文、物理页码和来源路径。**你自己的文档可能没有这道示例问题的答案**；请用单元 1 的真实问题替换。离线哈希检索对同词检索更有意义，对中文释义、英文跨语言问题可能很差。
 
-随后按 3.3 切换 API 配置并重新 `ingest`，再运行：
+随后按 3.3 修改根目录 `.env` 为 API 配置，重新入库后提问：
 
 ```powershell
-.\.venv\Scripts\python.exe .\rag_demo.py ask '实验使用几个随机种子？' --k 4
+python .\rag_demo.py ingest .\papers
+python .\rag_demo.py ask '实验使用几个随机种子？' --k 4
 ```
 
 输出可能是带 `[S1]` 的答案，也可能是 `INSUFFICIENT_EVIDENCE`。基线不设置相似度阈值，因此不相关问题也可能获得候选；模型拒答仍可能失效，这是单元 5 要评估的内容。
@@ -520,7 +523,7 @@ $env:RAG_STATE_DIR = '.\.rag_state'
 
 | 操作 | 预期结果 | 说明 |
 |---|---|---|
-| 关闭终端后重新配置 demo 并查询 | 仍能检索 | 验证磁盘持久化，而非同一进程的内存 |
+| 关闭终端后重新激活 langchain，保留 demo 配置并查询 | 仍能检索 | 验证磁盘持久化，而非同一进程的内存 |
 | 对相同目录连续 ingest 两次 | 当前代块数相同 | 旧代仍在磁盘，不是存储零增长 |
 | 修改某 PDF，再 ingest | 新代检索反映更新 | 文档路径相同，文件哈希和块 ID 更新 |
 | 把一份 PDF 移出资料目录，再 ingest | 当前代不含该文件 | 不支持“移出即实时删除”，须显式重建 |
@@ -812,13 +815,17 @@ graph LR
 
 ### 6.3 图片原图问答集成片段
 
-下例展示用已有模型适配器读取一张 PNG/JPEG 并提问。**这是 API 集成片段，不是图片索引应用**；保存为 `image_question.py`，在已安装单元 3 依赖的虚拟环境运行。只有指定的视觉模型支持图像输入时才可用，默认模型名来自单元 3 的配置，也可设置 `RAG_VISION_MODEL`。
+下例展示用已有模型适配器读取一张 PNG/JPEG 并提问。**这是 API 集成片段，不是图片索引应用**；保存为 `rag-practice/image_question.py`，在已安装单元 3 依赖的 Conda `langchain` 环境运行。该片段同样读取项目根目录 `.env`。只有指定的视觉模型支持图像输入时才可用，默认模型名来自单元 3 的配置，也可设置 `RAG_VISION_MODEL`。
 
 ```python
 import base64
 import os
 from pathlib import Path
 import sys
+
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env", override=False)
 
 os.environ["LANGSMITH_TRACING"] = "false"
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
@@ -855,7 +862,7 @@ print(response.content)
 
 模型图像消息格式可核对 [ChatOpenAI 集成文档](https://docs.langchain.com/oss/python/integrations/chat/openai)。这里上传的是原图字节，可能包含文件内元数据；若你采用去 EXIF 或缩放的派生副本，必须明确副本的产生方式并保留与原图的定位关系。
 
-运行命令：`.\.venv\Scripts\python.exe .\image_question.py "photos/beach.jpg" "能否看到红色背包？请说明位置；看不清就说看不清。"`。图片描述生成可以复用此片段，把问题改为“列出可见物体、场景、可辨文字和不确定项”；入库时将结果标记为模型派生描述。
+在 `rag-practice` 目录运行：`python .\image_question.py "photos/beach.jpg" "能否看到红色背包？请说明位置；看不清就说看不清。"`。图片描述生成可以复用此片段，把问题改为“列出可见物体、场景、可辨文字和不确定项”；入库时将结果标记为模型派生描述。
 
 小字辨认可能需要裁剪，但裁剪区域应该记录相对原图坐标并保留缩放比例。视觉模型不能替代精确读数工具；论文图表和财务截图中的数值应回到高分辨率原图或结构化源数据核对。
 
@@ -1121,7 +1128,8 @@ Agentic RAG 应限制最大检索次数、模型调用次数和费用，并保�
 
 | 症状 | 先检查什么 | 有针对性的处理 |
 |---|---|---|
-| 安装成功但 import 失败 | `python` 是否为当前 `.venv` | 始终使用 `.venv/Scripts/python.exe`，运行 pip check |
+| 安装成功但 import 失败 | `python` 是否来自 Conda `langchain` 环境 | `conda activate langchain`，用 `python -c "import sys; print(sys.executable)"` 核对解释器，运行 `python -m pip check` |
+| 修改 `.env` 后配置未生效 | 文件是否位于项目根目录、终端是否有同名变量 | 系统环境变量优先；清除冲突变量后重新运行脚本 |
 | PDF 导入成功但找不到段落 | 实际提取文本与页号 | 修阅读顺序/OCR/字符清理，再重建 |
 | 英文原句能搜到，中文问题搜不到 | 模型跨语言能力、查询前缀 | 多语言模型对比，保留原术语通道 |
 | 函数名找不到 | 分词、标识符、排除规则 | 精确符号检索 + BM25 + 模块元数据 |
@@ -1172,7 +1180,9 @@ Agentic RAG 应限制最大检索次数、模型调用次数和费用，并保�
 
 ## 附录 D：本次验证记录与下一步
 
-本文与配套方案交付的是 Markdown 文档。运行验证使用临时目录中的副本和人工生成的教学 PDF，没有读取或上传你的私人材料。
+下表保留手册初版的验证记录，其中 Python 3.14.6 是当时的验证环境，不是当前项目的运行要求。初版运行验证使用临时目录中的副本和人工生成的教学 PDF，没有读取或上传你的私人材料。
+
+本次同步到 Conda `langchain` 与 `.env` 后，已使用 `D:\Anaconda\envs\langchain\python.exe` 验证脚本导入、`--help`、从不同目录定位同一 `.env`、配置加载顺序、系统环境变量优先级、缺少 `.env` 时的离线默认配置及缺少密钥时的提示。手册中的完整 RAG 代码与实际脚本一致，RAG 和图片问答代码块均通过语法检查。本次未重跑下表中的完整 PDF 流程，也未调用模型 API。
 
 | 检查项 | 本次范围 |
 |---|---|
