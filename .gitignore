@@ -3,5 +3,6 @@
 .key
 __pycache__/
 .pytest_cache/
-Model_weight/
+Model/
+/rag-practice/prepared/
 
