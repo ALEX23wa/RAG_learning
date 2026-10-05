@@ -1,0 +1,42 @@
+{
+  "campaign": "quality-v2",
+  "load_active": false,
+  "index_profile": "quality-v2",
+  "chunk_tokens": 384,
+  "overlap": 48,
+  "embedding_input_tokens": 480,
+  "lexical_candidates": 80,
+  "dense_candidates": 80,
+  "rerank_candidates": 60,
+  "reranker_max_tokens": 1024,
+  "evidence_limit": 12,
+  "rrf_k": 10,
+  "context_tokens": 8000,
+  "generation_context_tokens": 32000,
+  "query_planning": true,
+  "verify_answers": true,
+  "expand_context": true,
+  "pdf_mode": "auto",
+  "pdf_overrides": {
+    "基于STM32的电机状态监测系统设计_闫丹.pdf": {
+      "default": "auto",
+      "75": "text",
+      "source_sha256": "0cf7fbba524ad1df4f5ac75e957ded9421b5036b2345f107e77a1b0d8400b12c"
+    }
+  },
+  "embedding_model": "BAAI/bge-m3",
+  "embedding_dimension": 1024,
+  "embedding_max_tokens": 512,
+  "embedding_directory": "candidate-bge-m3",
+  "index_schema": "quality-v2",
+  "embedding_revision": "5617a9f61b028005a4858fdac845db406aefb181",
+  "embedding_precision": "float32",
+  "embedding_batch": 4,
+  "reranker_model": "BAAI/bge-reranker-v2-m3",
+  "reranker_revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+  "reranker_directory": "reranker",
+  "judge_reasoning_effort": "low",
+  "judge_max_tokens": 6144,
+  "judge_reasoning_scope": "sufficiency",
+  "use_evidence_outline": true
+}

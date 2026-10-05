@@ -1,0 +1,244 @@
+{
+  "schema": "quality-v2-project-closeout-v1",
+  "created_utc": "2026-10-05T01:14:29.621128+00:00",
+  "decision": "Closed at user request; best full development result selected for project closeout; original production quality gates failed.",
+  "selection_rule": "Highest strict frozen-fact/source-supported outcome among complete comparable 120-case development runs; no mixing of runs, partial pilots, open-question rubric or legacy60.",
+  "best_development": {
+    "run": "quality-v2-qa-dev-v6",
+    "split": "dev",
+    "passed": 117,
+    "total": 120,
+    "accuracy": 0.975,
+    "raw_automatic_passed": 105,
+    "open_request_diagnostic_passed": 118,
+    "accuracy_wilson95_descriptive_only": [
+      0.9290699666721339,
+      0.9914618252300978
+    ],
+    "metrics": {
+      "completed": 120,
+      "total": 120,
+      "passed": 117,
+      "accuracy": 0.975,
+      "legacy_locator_recall_at_10": 0.9666666666666667,
+      "span_recall_at_10": 0.9322033898305084,
+      "evidence_recall_at_10": 0.9322033898305084,
+      "abstention_precision": 1.0,
+      "abstention_recall": 0.9166666666666666,
+      "answerable_false_abstention_rate": 0.0,
+      "faithfulness": 0.9976190476190476,
+      "p95_seconds": 55.12668230000418,
+      "peak_rss_bytes": 6203490304,
+      "total_cost_cny_upper_estimate": 7.441116,
+      "cost_aggregation": "maximum COALESCE(cost,reserved) per unique ledger call ID",
+      "citation_location_validity": 1.0,
+      "candidate_recall_at_80": 0.9576271186440678
+    },
+    "raw_report_sha256": "25678c86545294987b42e5ce07d423db1d2a16ee694a35ee10aa32340722f4d6",
+    "audit_sha256": "a1c36ffbb4d27dff138d943769d6fe0c224c1cec25d0a3a9d6a6a4ae3502df4d",
+    "root_review_sha256": "fd86469583a060acba1fd4cf07d3d5a6842c9971f1ccf604010d2cee2eb333d5",
+    "human_verified": false,
+    "reviewer_participated_in_dev_gold": true
+  },
+  "comparable_development_runs": [
+    {
+      "run": "quality-v2-qa-dev-v4",
+      "raw_automatic_passed": 103,
+      "strict_passed": 111,
+      "total": 120
+    },
+    {
+      "run": "quality-v2-qa-dev-v5",
+      "raw_automatic_passed": 107,
+      "strict_passed": 116,
+      "total": 120
+    },
+    {
+      "run": "quality-v2-qa-dev-v6",
+      "raw_automatic_passed": 105,
+      "strict_passed": 117,
+      "total": 120
+    }
+  ],
+  "legacy_regression": {
+    "raw_report_sha256": "c1d1f6cdcd0722325f4f8654e368ad7878a08f187b6a6e08e815b1b81f59f55f",
+    "audit_sha256": "1afde344f20be499c574ffe951321cc1497b0827b1cf3d8ba20fa1ba9d6042a9",
+    "derived_report_sha256": "56f4420fb29503261a7d76df892c77be9eafa33bef828cbad73e7fa6465ca760",
+    "result": {
+      "status": "passed",
+      "completed": 60,
+      "total": 60,
+      "passed": 59,
+      "accuracy": 0.9833333333333333,
+      "evidence_recall_at_10": 0.9824561403508771,
+      "legacy_locator_recall_at_10": 0.9824561403508771,
+      "span_recall_at_10": null,
+      "faithfulness": 0.993103448275862,
+      "citation_location_validity": 1.0,
+      "supported_claims": 144,
+      "total_claims": 145
+    },
+    "user_legacy_gate_passed": true,
+    "not_blind_acceptance": true
+  },
+  "final_blind": {
+    "run": "quality-v2-blind-v2",
+    "split": "blind",
+    "raw_automatic_passed": 75,
+    "independent_audit_metrics": {
+      "status": "failed",
+      "completed": 120,
+      "total": 120,
+      "passed": 89,
+      "accuracy": 0.7416666666666667,
+      "evidence_recall_at_10": 0.8879310344827587,
+      "legacy_locator_recall_at_10": 0.9166666666666666,
+      "span_recall_at_10": 0.8879310344827587,
+      "faithfulness": 1.0,
+      "citation_location_validity": 1.0,
+      "supported_claims": 276,
+      "total_claims": 276,
+      "candidate_recall_at_80": 0.9224137931034483,
+      "context_coverage": 0.896551724137931,
+      "abstention_precision": 0.5,
+      "abstention_recall": 0.5,
+      "answerable_false_abstention_rate": 0.05555555555555555,
+      "trace_measurements_complete": true,
+      "p95_seconds": 83.14975169999525,
+      "peak_rss_bytes": 5940043776
+    },
+    "accuracy_wilson95": [
+      0.6567146994175665,
+      0.8116260368133936
+    ],
+    "by_type": {
+      "cross_source": {
+        "passed": 11,
+        "total": 12,
+        "accuracy_wilson95": [
+          0.646120088858883,
+          0.9851349055950829
+        ]
+      },
+      "multi_turn": {
+        "passed": 10,
+        "total": 12,
+        "accuracy_wilson95": [
+          0.5519691377470266,
+          0.9530348578161463
+        ]
+      },
+      "single": {
+        "passed": 56,
+        "total": 84,
+        "accuracy_wilson95": [
+          0.5605282305356535,
+          0.7582278599927931
+        ]
+      },
+      "unanswerable": {
+        "passed": 12,
+        "total": 12,
+        "accuracy_wilson95": [
+          0.7575059933447592,
+          1.0
+        ]
+      }
+    },
+    "raw_report": ".rag/reports/quality-v2-blind-v2/answers.json",
+    "raw_report_sha256": "17bd4ecab577a01cf4af8315bdf5af1b329cf5b995e60681af05b54a83d78b2c",
+    "audit_sha256": "57c600090773c5b510b74bfac2ce9d2c0edf44582b9980ce156ae0bdbb7bf92b",
+    "derived_report_sha256": "b14560a96790db6dca49cb89a121e41633f098f3b90120fdcd988e0f95fc961b",
+    "dataset_sha256": "11fb55a9f162fb2aef75704ac56d526863d0047e5d0027fe786de15ec4c5d69e",
+    "reviewer": "agent:/root/ingestion_eval_audit",
+    "human_verified": false,
+    "independent_of_blind_gold": true,
+    "known_failed_case_ids": [
+      "qv2-blind-cross_source-007",
+      "qv2-blind-multi_turn-009",
+      "qv2-blind-multi_turn-010",
+      "qv2-blind-single-008",
+      "qv2-blind-single-022",
+      "qv2-blind-single-023",
+      "qv2-blind-single-024",
+      "qv2-blind-single-025",
+      "qv2-blind-single-026",
+      "qv2-blind-single-027",
+      "qv2-blind-single-028",
+      "qv2-blind-single-029",
+      "qv2-blind-single-030",
+      "qv2-blind-single-031",
+      "qv2-blind-single-032",
+      "qv2-blind-single-033",
+      "qv2-blind-single-034",
+      "qv2-blind-single-035",
+      "qv2-blind-single-036",
+      "qv2-blind-single-037",
+      "qv2-blind-single-038",
+      "qv2-blind-single-039",
+      "qv2-blind-single-040",
+      "qv2-blind-single-041",
+      "qv2-blind-single-042",
+      "qv2-blind-single-043",
+      "qv2-blind-single-044",
+      "qv2-blind-single-045",
+      "qv2-blind-single-050",
+      "qv2-blind-single-065",
+      "qv2-blind-single-080"
+    ],
+    "raw_status_counts": {
+      "answered": 84,
+      "abstained": 12,
+      "verification_failed": 24
+    },
+    "provider_failures": {
+      "verification_failed_count": 24,
+      "trace_error_counts": {
+        "ProviderUnavailable": 24
+      },
+      "call_status_counts_within_failed_requests": {
+        "failed": 26
+      },
+      "no_retry_per_closeout": true,
+      "interpretation": "Provider failures remain failed user-visible outcomes; do not infer retrieval failure for these cases or remove them from whole-run latency/accuracy."
+    },
+    "total_cost_cny_upper_estimate": 9.590733
+  },
+  "campaign": {
+    "campaign": "quality-v2",
+    "total_cny": 47.718267,
+    "includes_failed_calls": true,
+    "calls": 2578,
+    "scope": "all local generation catalogs"
+  },
+  "budget_cny": 100,
+  "tests": {
+    "passed": 972,
+    "seconds": 84.35,
+    "log_sha256": "423f1c8c93a6b221b204f07a8fcb5012b75fc704b4d918ab6ec40743e1361212"
+  },
+  "runtime_fingerprint": "b44b6d055b0795dd8c96cdb70485643be0eb612992ee926ddd828a8860a2dff8",
+  "best_config": "config/quality-v2-best.json",
+  "best_config_sha256": "bd289e5c2b5056007e5a21ab8d802bfe0bc297ab96bd5e1c08e80c831baa10d3",
+  "production_index_published": false,
+  "original_indexes_preserved": true,
+  "additional_experiments_authorized": false,
+  "free_channel": {
+    "historical_completed": 3,
+    "total": 60,
+    "accepted": false
+  },
+  "cleanup": {
+    "removed_obsolete_export": "environment_xxpp.yml",
+    "historical_documents": "docs/archive/",
+    "raw_reports_and_snapshots": "Retained in local .rag; not uploaded",
+    "disposable_caches": "Recursive deletion rejected by approval policy; retained locally and Git-ignored"
+  },
+  "limitations": [
+    "Best development result was selected after tuning and is not held-out acceptance.",
+    "Independent agent source audit is not human verification.",
+    "Raw automatic scores remain preserved separately from source-audited outcomes.",
+    "Costs are conservative configured estimates including failures/reservations, not provider invoices.",
+    "No rollback assets, failed experiments or original sources removed."
+  ]
+}

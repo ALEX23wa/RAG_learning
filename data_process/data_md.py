@@ -26,7 +26,17 @@ logger = logging.getLogger(__name__)
 
 
 def _mineru_environment(device: str) -> dict[str, str]:
-    """每次解析独立设置后端，防止 native GPU 缓存妨碍 CPU 回退。"""
+    """构造独立 MinerU 子进程的后端环境，支持干净的 CPU 回退。
+
+    Args:
+        device: str：调用方已校验的 gpu 或 cpu；cpu 显式隐藏 Vulkan/CUDA 设备。
+
+    Returns:
+        dict[str, str]：当前进程环境的副本，加上 MinerU/设备/UTF-8 配置。
+
+    Notes:
+        不直接修改父进程环境；小型模型与表格组件固定使用 ONNX CPU，VLM 使用 llama.cpp。
+    """
     env = os.environ.copy()
     env.update(MINERU_MODEL_SMALL_BACKEND="onnx", MINERU_MODEL_VLM_ENGINE="llama-cpp",
                MINERU_DEVICE_MODE="cpu", MINERU_TABLE_DEVICE="cpu", PYTHONUTF8="1")
@@ -38,7 +48,20 @@ def _mineru_environment(device: str) -> dict[str, str]:
 
 
 def mineru_gpu_devices() -> list[str]:
-    """用安装包自带的 llama.cpp 实测设备；不能用 torch.cuda 判断 AMD Vulkan。"""
+    """调用 MinerU 自带的 llama.cpp 程序实测可用加速设备。
+
+    Args:
+        无显式输入参数。
+
+    Returns:
+        list[str]：Vulkan/CUDA/ROCm/Metal 设备描述；探测失败或未发现设备时返回空列表。
+
+    Raises:
+        ImportError：未安装或无法定位 mineru_llama_cpp 包。
+
+    Notes:
+        无显式参数；设备探测超时 30 秒，失败原因写日志。AMD Vulkan 不能通过 torch.cuda.is_available() 判断。
+    """
     spec = importlib.util.find_spec("mineru_llama_cpp")
     if spec is None or not spec.origin:
         raise ImportError("请先安装 environment.yml 中的 mineru-llama-cpp")
@@ -58,7 +81,18 @@ def mineru_gpu_devices() -> list[str]:
 
 
 def _gpu_failure(returncode: int, log: str) -> bool:
-    """仅 GPU/内存/native 崩溃触发回退；模型下载和输入错误直接报告。"""
+    """判断子进程失败是否适合从 GPU 回退到 CPU。
+
+    Args:
+        returncode: int：MinerU 子进程退出码。
+        log: str：该次运行的日志内容。
+
+    Returns:
+        bool：出现设备/内存错误标记或已知 native 崩溃码时为 True。
+
+    Notes:
+        模型下载失败或输入格式错误不因此被掩盖；匹配时忽略日志大小写。
+    """
     markers = ("out of memory", "erroroutofdevicememory", "errordevicelost",
                "vk_error", "device lost", "failed to allocate", "vulkan error",
                "failed to create vulkan", "no vulkan devices", "cuda error")
@@ -68,12 +102,20 @@ def _gpu_failure(returncode: int, log: str) -> bool:
 
 # 第一步先处理文本型PDF
 def extract_text_from_pdf(pdf_path: Path | str) -> list[dict]:
-    """
-    Extract text from a PDF file using pypdf, but can't process images.
-  
+    """使用 pypdf 提取 PDF 已有文字层，保留原始页号。
+
     Args:
-        pdf_path (Path | str): The path to the PDF file.
-        """
+        pdf_path: Path | str：本地 PDF 文件路径。
+
+    Returns:
+        list[dict]：每页一个记录，含 source 路径、从 1 开始的 page 和 text；空白页 text 为空字符串。
+
+    Raises:
+        ValueError：检测到加密 PDF；读取或 PDF 格式错误向上传递。
+
+    Notes:
+        不识别扫描图片；项目内路径保存为相对 PROJECT_ROOT 的路径，项目外保存绝对路径。
+    """
     pdf_path = Path(pdf_path).resolve()
     reader = PdfReader(pdf_path)
     if reader.is_encrypted:
@@ -90,11 +132,19 @@ def extract_text_from_pdf(pdf_path: Path | str) -> list[dict]:
 
 # 第一步的进阶方法，使用unstructured OCR技术处理文本型PDF和图片型PDF(但似乎效果很一般) 可以试试MinerU
 def extract_text_from_pdf_ocr(pdf_path:Path | str) -> list[dict]:
-    """
-    提取 PDF 各页文字；对扫描页使用 OCR技术进行识别, 返回每页的内容。
+    """通过 unstructured 的 OCR-only 策略识别 PDF 并按页合并文字。
 
     Args:
-        pdf_path (Path | str): The path to the PDF file.
+        pdf_path: Path | str：需要中英文 OCR 的本地 PDF。
+
+    Returns:
+        list[dict]：按物理页号排序的 source/page/text；没有有效识别文字的页不返回。
+
+    Raises:
+        ValueError：partition_pdf 处理失败，并保留原异常链。
+
+    Notes:
+        识别语言为 eng 与 chi_sim；需安装对应 OCR 依赖。
     """
     from unstructured.partition.pdf import partition_pdf
 
@@ -127,7 +177,14 @@ def extract_text_from_pdf_ocr(pdf_path:Path | str) -> list[dict]:
 
 
 def pages_to_markdown(pages: list[dict]) -> str:
-    """将 PDF 逐页提取结果转成带页码的 Markdown。"""
+    """将逐页提取结果组合为带中文页码标题的 Markdown。
+
+    Args:
+        pages: list[dict]：各记录需含 page（物理页号）和 text（字符串）。
+
+    Returns:
+        str：非空页组成的 Markdown；存在内容时末尾含换行，全部为空时返回空字符串。
+    """
     sections = []
     for page in pages:
         text = page["text"].strip()
@@ -137,7 +194,18 @@ def pages_to_markdown(pages: list[dict]) -> str:
 
 
 def pdf_to_markdown(pdf_path: Path | str, use_ocr: bool = False) -> Path:
-    """提取 PDF 并将 Markdown 写入 papers/extracted 目录。"""
+    """选择文字层或 OCR 提取，将结果保存为 Markdown 文件。
+
+    Args:
+        pdf_path: Path | str：原始 PDF 文件路径。
+        use_ocr: bool：True 使用 OCR-only；False 使用 pypdf 文字层，默认 False。
+
+    Returns:
+        Path：写入的 papers/extracted/<原文件名>.md 路径。
+
+    Notes:
+        自动创建 OUTPUT_DIR；同名输出会被覆盖，原始 PDF 不变。
+    """
     pdf_path = Path(pdf_path)
     pages = (
         extract_text_from_pdf_ocr(pdf_path)
@@ -160,16 +228,24 @@ def pdf_to_markdown_mineru(
     page_range: str = "",
     device: Literal["auto", "gpu", "cpu"] = "auto",
 ) -> Path:
-    """使用 MinerU 4.x 将 PDF 转为 Markdown，并保存图片和结构化 JSON
+    """在独立进程中运行 MinerU，保存 Markdown、图片及结构化 JSON。
 
-    默认输出：papers/extracted/mineru/markdown.md。
-    output_dir 指定本次结果目录；重复运行会覆盖该目录中的同名结果文件。
-    ocr_mode="auto" 自动选择文字提取方式，扫描件可指定 "ocr"。
-    page_range 默认处理全部页面；"1-3" 表示仅处理第 1 至 3 页
-    首次使用模型可能下载权重；flash + txt 仅提取已有文字层
-    device="auto" 优先 Vulkan GPU，设备不可用或 GPU 运行失败时重试 CPU。
-    device="gpu" 强制 GPU（失败报错），"cpu" 强制 CPU；ONNX 小模型始终使用 CPU。
-    解析在独立子进程运行；详细日志为输出目录中的 mineru-gpu.log / mineru-cpu.log。
+    Args:
+        pdf_path: Path | str：存在的 PDF 文件，支持用户目录展开。
+        output_dir: Path | str | None：结果目录；None 使用 papers/extracted/mineru，同名结果文件会覆盖。
+        tier: str：flash、basic、standard、advanced 之一，默认 standard；首次使用可能下载模型。
+        ocr_mode: str：auto 自动选择、txt 使用文字层、ocr 执行识别，默认 auto。
+        page_range: str：页面范围，例如 1-3；空字符串处理全部页面，页码从 1 开始。
+        device: str：auto 优先 GPU 且设备/内存失败时回退 CPU；gpu 强制 GPU；cpu 强制 CPU。
+
+    Returns:
+        Path：输出目录中的 markdown.md 绝对路径。
+
+    Raises:
+        FileNotFoundError：PDF 不存在；ValueError：扩展名或设备参数非法；RuntimeError：强制 GPU 不可用、解析失败或未生成 Markdown。
+
+    Notes:
+        ONNX 小模型始终使用 CPU。每次尝试写 mineru-gpu.log 或 mineru-cpu.log；下载/输入错误不会被误判成 GPU 错误。
 
     Example:
         md_path = pdf_to_markdown_mineru(PROJECT_DIR / "rag.pdf", page_range="1-3")
@@ -218,6 +294,17 @@ def pdf_to_markdown_mineru(
 
 
 def _main() -> None:
+    """处理 PDF 转 Markdown 命令行入口与隔离工作进程入口。
+
+    Args:
+        无显式输入参数。
+
+    Returns:
+        None：主模式打印输出路径；worker 模式将 MinerU 结果写入指定目录。
+
+    Notes:
+        无显式参数；从 sys.argv 读取 PDF、输出目录、tier、OCR、页范围和设备。worker 在导入 native 模型前设置环境，避免父进程缓存设备状态。
+    """
     cli = argparse.ArgumentParser(description="MinerU PDF 转 Markdown，默认 GPU 优先、CPU 回退")
     cli.add_argument("pdf", nargs="?", type=Path, default=PROJECT_DIR / "rag.pdf")
     cli.add_argument("--output-dir", type=Path, default=OUTPUT_DIR / "mineru")

@@ -1,8 +1,16 @@
 .vscode/
 .env
+.env.*
+!.env.example
+!.env.template
 .key
 __pycache__/
+*.py[cod]
 .pytest_cache/
+.venv/
 Model/
 /rag-practice/prepared/
 extracted/
+papers/
+.rag/
+*.egg-info/

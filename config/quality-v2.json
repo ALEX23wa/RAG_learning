@@ -1,0 +1,27 @@
+{
+  "campaign": "quality-v2",
+  "load_active": false,
+  "index_profile": "quality-v2",
+  "chunk_tokens": 384,
+  "overlap": 48,
+  "embedding_input_tokens": 480,
+  "lexical_candidates": 80,
+  "dense_candidates": 80,
+  "rerank_candidates": 60,
+  "reranker_max_tokens": 1024,
+  "evidence_limit": 12,
+  "rrf_k": 10,
+  "context_tokens": 8000,
+  "generation_context_tokens": 32000,
+  "query_planning": true,
+  "verify_answers": true,
+  "expand_context": true,
+  "pdf_mode": "auto",
+  "pdf_overrides": {
+    "基于STM32的电机状态监测系统设计_闫丹.pdf": {
+      "default": "auto",
+      "75": "text",
+      "source_sha256": "0cf7fbba524ad1df4f5ac75e957ded9421b5036b2345f107e77a1b0d8400b12c"
+    }
+  }
+}
