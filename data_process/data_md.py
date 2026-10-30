@@ -1,3 +1,7 @@
+"""
+这是将PDF文件转换为Markdown的工具，支持文本型PDF和图片型PDF（扫描件），并可使用MinerU 4.x进行更强的结构化内容提取。
+"""
+
 import os
 import argparse
 import importlib.util
@@ -21,6 +25,9 @@ os.environ.setdefault("HF_HOME", str(MINERU_HOME / "cache" / "huggingface"))
 os.environ.setdefault("HF_HUB_CACHE", str(Path(os.environ["HF_HOME"]) / "hub"))
 os.environ.setdefault("HF_XET_CACHE", str(Path(os.environ["HF_HOME"]) / "xet"))
 os.environ.setdefault("MODELSCOPE_CACHE", str(MINERU_HOME / "cache" / "modelscope"))
+# 使用 ModelScope 补齐公式等模型，避免 Hugging Face 连接超时。
+# 如需其他下载源，可在运行前显式设置 MINERU_MODEL_SOURCE。
+os.environ.setdefault("MINERU_MODEL_SOURCE", "modelscope")
 
 logger = logging.getLogger(__name__)
 
@@ -219,7 +226,7 @@ def pdf_to_markdown_mineru(
 
 def _main() -> None:
     cli = argparse.ArgumentParser(description="MinerU PDF 转 Markdown，默认 GPU 优先、CPU 回退")
-    cli.add_argument("pdf", nargs="?", type=Path, default=PROJECT_DIR / "rag.pdf")
+    cli.add_argument("pdf", nargs="?", type=Path, default=PROJECT_DIR / "IPCC_AR6_WGII_Chapter03.pdf")
     cli.add_argument("--output-dir", type=Path, default=OUTPUT_DIR / "mineru")
     cli.add_argument("--tier", choices=["flash", "basic", "standard", "advanced"], default="standard")
     cli.add_argument("--ocr-mode", choices=["auto", "txt", "ocr"], default="auto")
